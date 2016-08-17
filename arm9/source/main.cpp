@@ -36,6 +36,10 @@ int main(int argc, const char* argv[])
 	int curCheat = 0;
 	char gameid[4];
 	uint32_t headerCRC;
+	
+	unsigned int * SCFG_CLK=	(unsigned int*)0x4004004; 
+ 	
+ 	*SCFG_CLK=	*SCFG_CLK | 1; 		
 
 	// 60 second delay before continuing.
 	for (int i = 0; i < 60; i++) {
