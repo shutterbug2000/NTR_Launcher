@@ -41,7 +41,8 @@ int main(int argc, const char* argv[])
  	
  	*SCFG_CLK=	*SCFG_CLK | 1; 		
 
-	// 60 second delay before continuing.
+	// 3 second delay before continuing. If new CPU boost code is enabled, load screen is black.
+	// Not sure why that happens. Timing for this is a bit narrower if CPU clock speeds boosted but withen pratical limits for testing purposes.
 	for (int i = 0; i < 60; i++) {
 		swiWaitForVBlank();
 	}
