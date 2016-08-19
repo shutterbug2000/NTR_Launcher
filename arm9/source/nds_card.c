@@ -36,10 +36,9 @@ void getHeader (u32* ndsHeader) {
 
 void SwitchToNTRCARD()
 {
-	*SCFG_EXT|=~10000000;
 }
 
 void SwitchToTWLCARD()
 {
-    *SCFG_EXT|=10000000;
+    *SCFG_EXT|=0x80;
 }

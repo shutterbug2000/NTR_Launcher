@@ -32,12 +32,12 @@ unsigned int * SCFG_MC=(unsigned int*)0x4004010;
 
 void SwitchToNTRCARD()
 {
-	*SCFG_EXT&=~10000000;
+	*SCFG_EXT&=~0x80;
 }
 
 void SwitchToTWLCARD()
 {
-    * SCFG_EXT|=10000000;
+    *SCFG_EXT|=0x80;
 }
 
 // from https://github.com/d0k3/Decrypt9WIP/blob/master/source/gamecart/protocol.c#L48-L73
@@ -124,7 +124,9 @@ void ResetSlot() {
 //---------------------------------------------------------------------------------
 int main(void) {
 //---------------------------------------------------------------------------------
+    SwitchToTWLCARD();
 	ResetSlot();
+	SwitchToNTRCARD();
 
 	irqInit();
 	fifoInit();
