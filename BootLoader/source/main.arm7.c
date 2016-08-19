@@ -216,7 +216,10 @@ void arm7_startBinary (void)
 	while(REG_VCOUNT!=191);
 	while(REG_VCOUNT==191);
 	// Start ARM7
-	resetCpu();
+	
+	void (*foo)() = *(u32*)(0x27FFE34);
+	
+	foo();
 }
 
 
@@ -239,7 +242,7 @@ void arm7_main (void) {
 	// Load the NDS file
 	errorCode = arm7_loadBinary();
 	if (errorCode) {
-		errorOutput(errorCode);
+		debugOutput(errorCode);
 	}
 	
 	debugOutput (ERR_STS_HOOK_BIN);

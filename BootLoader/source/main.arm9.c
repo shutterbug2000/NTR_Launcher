@@ -217,8 +217,8 @@ void arm9_main (void) {
 	arm9_stateFlag = ARM9_READY;
 	while ( arm9_stateFlag != ARM9_BOOTBIN ) {
 		if (arm9_stateFlag == ARM9_DISPERR) {
-			// Re-enable for debug purposes. But for now it's not really that informative to the enduser. :P
-			// arm9_errorOutput (arm9_errorCode, arm9_errorClearBG);
+			// Re-enable for debug purposes. But for not it's not really that informative to the enduser. :P
+			arm9_errorOutput (arm9_errorCode, arm9_errorClearBG);
 			if ( arm9_stateFlag == ARM9_DISPERR) {
 				arm9_stateFlag = ARM9_READY;
 			}
@@ -228,6 +228,13 @@ void arm9_main (void) {
 	// wait for vblank then boot
 	while(REG_VCOUNT!=191);
 	while(REG_VCOUNT==191);
-	resetCpu();
+	
+	u32 first = *(u32*)(0x27FFE34);
+	
+	//arm9_errorOutput (*(u32*)(first), true);
+	
+	void (*foo)() = *(u32*)(0x27FFE24);
+	
+	foo();
 }
 

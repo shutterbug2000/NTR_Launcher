@@ -26,6 +26,100 @@ void VcountHandler() {
 
 void VblankHandler(void) {
 }
+unsigned int * ROMCTRL=(unsigned int*)0x40001A4; 
+unsigned int * SCFG_EXT=(unsigned int*)0x4004008; 
+unsigned int * SCFG_MC=(unsigned int*)0x4004010; 
+
+void SwitchToNTRCARD()
+{
+	*SCFG_EXT&=~10000000;
+}
+
+void SwitchToTWLCARD()
+{
+    * SCFG_EXT|=10000000;
+}
+
+// from https://github.com/d0k3/Decrypt9WIP/blob/master/source/gamecart/protocol.c#L48-L73
+/*REG_CARDCONF2 = 0x0C;
+REG_CARDCONF &= ~3;
+
+if (REG_CARDCONF2 == 0xC) {
+	while (REG_CARDCONF2 != 0);
+}
+
+if (REG_CARDCONF2 != 0)
+	return;
+
+REG_CARDCONF2 = 0x4;
+while(REG_CARDCONF2 != 0x4);
+
+REG_CARDCONF2 = 0x8;
+while(REG_CARDCONF2 != 0x8);*/
+
+// from http://problemkaputt.de/gbatek.htm#dsicontrolregistersscfg	
+/*4004010h - DSi9 - SCFG_MC - Memory Card Interface Status (R)
+  4004010h - DSi7 - SCFG_MC - Memory Card Interface Control (R/W)
+  0     1st NDS Slot Game Cartridge (0=Inserted, 1=Ejected)               (R)
+  1     1st NDS Slot Unknown/Undocumented (0)
+  2-3   1st NDS Slot Power State (0=Off, 1=PrepareOn, 2=On, 3=RequestOff) (R/W)
+  4     2nd NDS Slot Game Cartridge (always 1=Ejected) ;\DSi              (R)
+  5     2nd NDS Slot Unknown/Undocumented (0)          ; prototype
+  6-7   2nd NDS Slot Power State    (always 0=Off)     ;/relict           (R/W)
+  8-15  Unknown/Undocumented (0)
+  16-31 ARM7: See Port 4004012h, ARM9: Unspecified (0)
+NDS-Slot related. Bit3 (and maybe Bit2) are probably R/W on ARM7 side (though the register is disabled on ARM7 side in cooking coach exploit, so R/W isn't possible in practice).
+Note: Additionally, the NDS slot Reset pin can be toggled (via ROMCTRL.Bit29; that bit is writeable on ARM7 side on DSi; which wasn't supported on NDS).
+Power state values:
+  0=Power is off
+  1=Prepare Power on (shall be MANUALLY changed to state=2)
+  2=Power is on
+  3=Request Power off (will be AUTOMATICALLY changed to state=0)
+power_on:
+  wait until state<>3                   ;wait if pwr off busy?
+  exit if state<>0                      ;exit if already on?
+  wait 1ms, then set state=1            ;prepare pwr on?       or want RESET ?
+  wait 10ms, then set state=2           ;apply pwr on?
+  wait 27ms, then set ROMCTRL=20000000h ;reset cart?  or rather RELEASE reset?
+  wait 120ms                            ;more insane delay?
+power_off:
+  wait until state<>3                   ;wait if pwr off busy?
+  exit if state<>2                      ;exit if already off?
+  set state=3                           ;request pwr off?
+  wait until state=0                    ;wait until pwr off?
+Power Off is also done automatically by hardware when ejecting the cartridge.*/	
+
+void PowerOffSlot()
+{
+	while(*SCFG_MC ==  0x0C);
+	if(*SCFG_MC != 0) return;
+	
+	*SCFG_MC = 0x0C;
+	while(*SCFG_MC !=  0x0);	
+}
+
+void PowerOnSlot()
+{
+	while(*SCFG_MC ==  0x0C);
+	if(*SCFG_MC != 2) return;
+	
+	swiWaitForVBlank();
+	*SCFG_MC = 0x04;
+	swiWaitForVBlank();
+	*SCFG_MC = 0x08;
+	swiWaitForVBlank();
+	swiWaitForVBlank();
+	*ROMCTRL = 0x20000000;
+	for (int i = 0; i < 7; i++) {
+		swiWaitForVBlank();
+	}
+}
+
+void ResetSlot() {
+	PowerOffSlot();
+	PowerOnSlot();
+}
+
 
 //---------------------------------------------------------------------------------
 int main(void) {
@@ -54,28 +148,14 @@ int main(void) {
 
 		if(*((vu32*)0x027FFE24) == (u32)0x027FFE04)
 		{
+			ResetSlot();
+		
 			irqDisable (IRQ_ALL);
 			*((vu32*)0x027FFE34) = (u32)0x06000000;
 
-		// if dsi mode is detected try switch back to ntr mode
-		// this may require extended access
-		// from http://problemkaputt.de/gbatek.htm#dsinotes
-		// if ([4004000h] AND 03h)=01h then DSi_mode else NDS_mode
-		// Caution: Below detection won't work with DSi exploits (because they are
-		// usually having the ARM7 SCFG registers disabled - it would be thus better
-		// to do the dection only on ARM9 side as described above, and then forward
-		// the result to ARM7 side).
-		// if ([4004008h] AND 80000000h)=0 then skip_detection_and_assume_NDS_mode
-		// else if ([4004000h] AND 03h)=01h then DSi_mode else NDS_mode
-		unsigned int * SCFG_ROM=	(unsigned int*)0x4004000;
-		unsigned int * SCFG_EXT=	(unsigned int*)0x4004008;
-		if(*SCFG_EXT & 0x80000000 != 0)  {
-			if (*SCFG_ROM & 0x03==0x01) {
-				*SCFG_ROM = 0;
-			}
-		}
 			swiSoftReset();
-		} 
+		}
+ 
 		swiWaitForVBlank();
 	}
 	

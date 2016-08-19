@@ -37,9 +37,11 @@ int main(int argc, const char* argv[])
 	char gameid[4];
 	uint32_t headerCRC;
 	
+	defaultExceptionHandler();
+	
 	unsigned int * SCFG_CLK=	(unsigned int*)0x4004004; 
  	
- 	*SCFG_CLK=	*SCFG_CLK | 1; 		
+ 	//*SCFG_CLK=	*SCFG_CLK | 1; 		
 
 	// 3 second delay before continuing. If new CPU boost code is enabled, load screen is black.
 	// Not sure why that happens. Timing for this is a bit narrower if CPU clock speeds boosted but withen pratical limits for testing purposes.
