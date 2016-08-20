@@ -103,17 +103,15 @@ void PowerOnSlot()
 	while(*SCFG_MC&0x0C ==  0x0C); // wait until state<>3
 	if(*SCFG_MC&0x0C != 0x00) return; //  exit if state<>0
 	
-	swiWaitForVBlank();
 	*SCFG_MC = 0x04;    // wait 1ms, then set state=1
 	while(*SCFG_MC&0x0C != 0x04);
 	
 	*SCFG_MC = 0x08;    // wait 10ms, then set state=2      
 	while(*SCFG_MC&0x0C != 0x08);
 	
-	*ROMCTRL = 0x20000000; // wait 27ms, then set ROMCTRL=20000000h
-	for (int i = 0; i < 7; i++) { // wait 120ms     
-		swiWaitForVBlank();
-	}
+	*ROMCTRL |= 0x20000000; // wait 27ms, then set ROMCTRL=20000000h
+	
+	while(*ROMCTRL&0x8000000 != 0x8000000);
 }
 
 void ResetSlot() {
