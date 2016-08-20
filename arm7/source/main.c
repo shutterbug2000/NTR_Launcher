@@ -92,7 +92,7 @@ Power Off is also done automatically by hardware when ejecting the cartridge.*/
 void PowerOffSlot()
 {
 	while(*SCFG_MC&0x0C ==  0x0C); 		// wait until state<>3
-	if(*SCFG_MC&0x0C != 0x08) return; 		// exit if already off?
+	if(*SCFG_MC&0x0C != 0x08) return; 		// exit if state<>2      
 	
 	*SCFG_MC = 0x0C;          		// set state=3 
 	while(*SCFG_MC&0x0C !=  0x00);  // wait until state=0
@@ -105,10 +105,11 @@ void PowerOnSlot()
 	
 	swiWaitForVBlank();
 	*SCFG_MC = 0x04;    // wait 1ms, then set state=1
-	swiWaitForVBlank();
+	while(*SCFG_MC&0x0C != 0x04);
+	
 	*SCFG_MC = 0x08;    // wait 10ms, then set state=2      
-	swiWaitForVBlank();
-	swiWaitForVBlank();
+	while(*SCFG_MC&0x0C != 0x08);
+	
 	*ROMCTRL = 0x20000000; // wait 27ms, then set ROMCTRL=20000000h
 	for (int i = 0; i < 7; i++) { // wait 120ms     
 		swiWaitForVBlank();
@@ -124,9 +125,12 @@ void ResetSlot() {
 //---------------------------------------------------------------------------------
 int main(void) {
 //---------------------------------------------------------------------------------
-    SwitchToTWLCARD();
+	int backup =*SCFG_EXT;
+	*SCFG_EXT=0xFFFFFFFF;	
+    //SwitchToTWLCARD();
 	ResetSlot();
-	SwitchToNTRCARD();
+	//SwitchToNTRCARD();
+	*SCFG_EXT=backup;
 
 	irqInit();
 	fifoInit();
