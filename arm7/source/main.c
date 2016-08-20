@@ -109,7 +109,7 @@ void PowerOnSlot()
 	*SCFG_MC = 0x08;    // wait 10ms, then set state=2      
 	while(*SCFG_MC&0x0C != 0x08);
 	
-	*ROMCTRL |= 0x20000000; // wait 27ms, then set ROMCTRL=20000000h
+	*ROMCTRL = 0x20000000; // wait 27ms, then set ROMCTRL=20000000h
 	
 	while(*ROMCTRL&0x8000000 != 0x8000000);
 }
